@@ -284,6 +284,12 @@
       font-weight: bold;
     }
 
+    .status-badge.outback {
+      background: #bf360c;
+      color: #ffe082;
+      font-weight: bold;
+    }
+
     .hud-exit-btn {
       background: #c62828;
       color: #fff;
@@ -935,6 +941,21 @@
         rockDark: 0x4b5d4e,
         rockLight: 0x627866,
         mud: 0x1f2e14
+      },
+      {
+        level: 6,
+        name: 'Australische Outback',
+        sky: 0xffb74d,
+        fog: 0xe68a5c,
+        grass: 0xc84b31,
+        safeFloor: 0xff8f00,
+        safeInner: 0xffe082,
+        leaves: 0x5c7a67,
+        leavesHi: 0x789c84,
+        trunk: 0xd7ccc8,
+        rockDark: 0xa8321e,
+        rockLight: 0xc6412b,
+        mud: 0x2b1d16
       }
     ];
 
@@ -1109,9 +1130,11 @@
         const nextLvl = GameEngine.level + 1;
         const themeIndex = (nextLvl - 1) % LEVEL_THEMES.length;
         const nextTheme = LEVEL_THEMES[themeIndex];
+        const nextRound = GameEngine.getRoundNumber(nextLvl);
+        const roundSuffix = nextRound > 1 ? ` - RONDE ${nextRound} (2X WERELD!)` : '';
         const cost = GameEngine.getLevelCost(nextLvl);
 
-        this.shopPrestigeTitle.textContent = `REIS NAAR LEVEL ${nextLvl} (${nextTheme.name.toUpperCase()})`;
+        this.shopPrestigeTitle.textContent = `REIS NAAR LEVEL ${nextLvl} (${nextTheme.name.toUpperCase()}${roundSuffix})`;
         this.shopPrestigeCost.textContent = `Prijs: €${cost.toLocaleString('nl-NL')}`;
       },
 
@@ -1191,19 +1214,28 @@
       },
 
       updateLevelUI(level, themeName) {
-        this.hudLevelText.textContent = `LEVEL ${level}: ${themeName.toUpperCase()}`;
+        const round = GameEngine.getRoundNumber(level);
+        const roundTag = round > 1 ? ` (RONDE ${round})` : '';
+        this.hudLevelText.textContent = `LEVEL ${level}: ${themeName.toUpperCase()}${roundTag}`;
       },
 
-      updateSpeedUI(speed, bonus, boostTimer = 0) {
+      updateSpeedUI(speed, bonus, boostTimer = 0, pickupSpeed = 0, pickupTimer = 0) {
         this.hudSpeedStat.textContent = Math.round(speed);
         this.hudCapStat.textContent = 25 - bonus;
 
         if (this.hudBoostTimer) {
+          const parts = [];
           if (bonus > 0 && boostTimer > 0) {
-            const sec = Math.ceil(boostTimer);
+            parts.push(`⚡ SHOP: +${bonus} (${Math.ceil(boostTimer)}s)`);
+          }
+          if (pickupSpeed > 0 && pickupTimer > 0) {
+            parts.push(`⚡ BLIKSEM: +${pickupSpeed} (${Math.ceil(pickupTimer)}s)`);
+          }
+
+          if (parts.length > 0) {
             this.hudBoostTimer.style.display = 'block';
-            this.hudBoostTimer.textContent = `⚡ BOOST: +${bonus} (${sec}s)`;
-            this.hudBoostTimer.style.color = sec <= 10 ? '#ff8a80' : '#ffd54f';
+            this.hudBoostTimer.textContent = parts.join(' | ');
+            this.hudBoostTimer.style.color = pickupSpeed > 0 ? '#00e5ff' : (boostTimer <= 10 ? '#ff8a80' : '#ffd54f');
           } else {
             this.hudBoostTimer.style.display = 'none';
           }
@@ -1228,7 +1260,7 @@
         }
       },
 
-      updateZoneUI(isSafe, isOnRock, isInMud = false, isOnIce = false, swampSinkPct = 0) {
+      updateZoneUI(isSafe, isOnRock, isInMud = false, isOnIce = false, swampSinkPct = 0, isInTar = false) {
         if (isOnRock) {
           this.hudZoneStatus.textContent = 'STATUS: OP ROTS (VEILIG) 🛡️';
           this.hudZoneStatus.className = 'status-badge safe-rock';
@@ -1238,6 +1270,9 @@
         } else if (isOnIce) {
           this.hudZoneStatus.textContent = 'STATUS: OP IJS (+60% GLIJDEN) ⛸️';
           this.hudZoneStatus.className = 'status-badge ice';
+        } else if (isInTar) {
+          this.hudZoneStatus.textContent = 'STATUS: TEER-/STOFKUIL (-60% SNELHEID) 🦘';
+          this.hudZoneStatus.className = 'status-badge outback';
         } else if (isInMud) {
           this.hudZoneStatus.textContent = 'STATUS: MODDER (-50% SNELHEID) 🐌';
           this.hudZoneStatus.className = 'status-badge mud';
@@ -1473,6 +1508,13 @@
         { id: 'capybara', name: 'Capybara', baseSpeed: 13.0, baseIncome: 30, bodyColor: 0xa1887f, headColor: 0x8d6e63, featureColor: 0x4e342e, scale: 0.95, type: 'bear' },
         { id: 'crocodile', name: 'Krokodil', baseSpeed: 15.2, baseIncome: 80, bodyColor: 0x2e7d32, headColor: 0x1b5e20, featureColor: 0x81c784, scale: 1.05, type: 'croc' },
         { id: 'black_panther', name: 'Zwarte Panter', baseSpeed: 17.5, baseIncome: 160, bodyColor: 0x1a1a1a, headColor: 0x111111, featureColor: 0xffd600, scale: 1.15, type: 'ears_pointed' }
+      ],
+      6: [ // Level 6: Australische Outback
+        { id: 'koala', name: 'Koala', baseSpeed: 8.5, baseIncome: 2, bodyColor: 0x90a4ae, headColor: 0xb0bec5, featureColor: 0xeceff1, scale: 0.68, type: 'koala' },
+        { id: 'platypus', name: 'Vogelbekdier', baseSpeed: 10.8, baseIncome: 10, bodyColor: 0x6d4c41, headColor: 0x5d4037, featureColor: 0x37474f, scale: 0.75, type: 'platypus' },
+        { id: 'wombat', name: 'Wombat', baseSpeed: 13.0, baseIncome: 30, bodyColor: 0x8d6e63, headColor: 0x795548, featureColor: 0x4e342e, scale: 0.95, type: 'bear' },
+        { id: 'dingo', name: 'Dingo', baseSpeed: 15.2, baseIncome: 80, bodyColor: 0xd99142, headColor: 0xe6a14e, featureColor: 0xfff3e0, scale: 0.92, type: 'ears_pointed' },
+        { id: 'kangaroo', name: 'Kangoeroe', baseSpeed: 17.5, baseIncome: 160, bodyColor: 0xc2653c, headColor: 0xd4764c, featureColor: 0x8d4324, scale: 1.15, type: 'kangaroo' }
       ]
     };
 
@@ -1489,11 +1531,16 @@
       clock: new THREE.Clock(),
       container: document.getElementById('game-container'),
 
+      BASE_WORLD_SIZE: 200,
       WORLD_SIZE: 200,
       SAFE_ZONE_RADIUS: 14,
       MAX_SPEED_CAP: 25,
       SPEED_BOOST_DURATION: 45.0,
+      PICKUP_BOOST_AMOUNT: 10,
+      PICKUP_BOOST_DURATION: 5.0,
 
+      groundMesh: null,
+      gridHelper: null,
       colliders: [],
       mudPuddles: [],
       obstacleMeshes: [],
@@ -1513,6 +1560,8 @@
         baseSpeed: 11.0,
         bonusSpeed: 0,
         boostTimer: 0,
+        pickupSpeed: 0,
+        pickupTimer: 0,
         sprintMultiplier: 1.75,
 
         // Verticale Fysica, Springen & Moeras Wegzakken
@@ -1543,7 +1592,9 @@
       },
 
       MAX_EGGS: 14,
+      MAX_LIGHTNING_BOLTS: 10,
       eggs: [],
+      lightningBolts: [],
       activeChaser: null,
       tamedPets: [],
 
@@ -1587,6 +1638,8 @@
         this.player.money = 0;
         this.player.bonusSpeed = 0;
         this.player.boostTimer = 0;
+        this.player.pickupSpeed = 0;
+        this.player.pickupTimer = 0;
         this.player.stamina = this.player.maxStamina;
         this.player.isExhausted = false;
         this.player.isSprinting = false;
@@ -1602,14 +1655,11 @@
         if (this.player.mesh) this.player.mesh.position.copy(this.player.position);
 
         this.clearAllAnimals();
-        this.clearAllEggs();
-        this.spawnEggField();
-
         this.applyLevelTheme(1, false);
 
         UIController.updateMoneyUI(0);
         UIController.updatePetCount(0);
-        UIController.updateSpeedUI(this.player.baseSpeed, 0, 0);
+        UIController.updateSpeedUI(this.player.baseSpeed, 0, 0, 0, 0);
         this.recalculateIncome();
       },
 
@@ -1617,6 +1667,7 @@
         this.isGameActive = false;
         this.clearAllAnimals();
         this.clearAllEggs();
+        this.clearAllLightningBolts();
       },
 
       clearAllAnimals() {
@@ -1639,6 +1690,13 @@
           this.scene.remove(this.eggs[i].mesh);
         }
         this.eggs = [];
+      },
+
+      clearAllLightningBolts() {
+        for (let i = 0; i < this.lightningBolts.length; i++) {
+          this.scene.remove(this.lightningBolts[i].mesh);
+        }
+        this.lightningBolts = [];
       },
 
       setupLights() {
@@ -1689,6 +1747,29 @@
         };
       },
 
+      getRoundNumber(level = this.level) {
+        return Math.floor((level - 1) / LEVEL_THEMES.length) + 1;
+      },
+
+      updateWorldDimensions(level = this.level) {
+        const round = this.getRoundNumber(level);
+        const targetSize = round >= 2 ? this.BASE_WORLD_SIZE * 2 : this.BASE_WORLD_SIZE;
+
+        if (this.WORLD_SIZE !== targetSize || !this.groundMesh) {
+          this.WORLD_SIZE = targetSize;
+          if (this.groundMesh) {
+            const ratio = this.WORLD_SIZE / this.BASE_WORLD_SIZE;
+            this.groundMesh.scale.set(ratio, 1, ratio);
+          }
+          if (this.gridHelper) {
+            this.scene.remove(this.gridHelper);
+          }
+          this.gridHelper = new THREE.GridHelper(this.WORLD_SIZE, this.WORLD_SIZE / 2, 0x444444, 0x555555);
+          this.gridHelper.position.y = 0.02;
+          this.scene.add(this.gridHelper);
+        }
+      },
+
       isIceTheme() {
         const themeIndex = (this.level - 1) % LEVEL_THEMES.length;
         return LEVEL_THEMES[themeIndex].level === 2;
@@ -1704,9 +1785,17 @@
         return LEVEL_THEMES[themeIndex].level === 5;
       },
 
+      isOutbackTheme() {
+        const themeIndex = (this.level - 1) % LEVEL_THEMES.length;
+        return LEVEL_THEMES[themeIndex].level === 6;
+      },
+
       applyLevelTheme(level, showBanner = true) {
         const themeIndex = (level - 1) % LEVEL_THEMES.length;
         const theme = LEVEL_THEMES[themeIndex];
+        const round = this.getRoundNumber(level);
+
+        this.updateWorldDimensions(level);
 
         this.scene.background = new THREE.Color(theme.sky);
         const fogDensity = theme.level === 5 ? 0.015 : 0.012;
@@ -1723,11 +1812,16 @@
         this.materials.mud.color.setHex(theme.mud);
 
         this.generateObstacles();
+        this.clearAllEggs();
+        this.spawnEggField();
+        this.clearAllLightningBolts();
+        this.spawnLightningField();
 
         UIController.updateLevelUI(level, theme.name);
 
         if (showBanner) {
-          UIController.showToast(`🏆 LEVEL ${level}: ${theme.name.toUpperCase()}!\nDieren gereset! Pas op: wilde dieren zijn nu sneller!`, '#00e676');
+          const roundNotice = round >= 2 ? ` (RONDE ${round}: WERELD IS 2X ZO GROOT!)` : '';
+          UIController.showToast(`🏆 LEVEL ${level}: ${theme.name.toUpperCase()}${roundNotice}!\nDieren gereset! Pak ⚡ bliksemschichten voor +10 snelheid!`, '#00e676');
         }
       },
 
@@ -1745,6 +1839,8 @@
 
           this.player.bonusSpeed = 0;
           this.player.boostTimer = 0;
+          this.player.pickupSpeed = 0;
+          this.player.pickupTimer = 0;
           this.player.velocityY = 0;
           this.player.slideVelX = 0;
           this.player.slideVelZ = 0;
@@ -1762,7 +1858,7 @@
           this.recalculateIncome();
 
           UIController.updateMoneyUI(this.player.money);
-          UIController.updateSpeedUI(this.player.baseSpeed, 0, 0);
+          UIController.updateSpeedUI(this.player.baseSpeed, 0, 0, 0, 0);
           UIController.updateShopUI();
 
           this.syncHighScore();
@@ -1782,9 +1878,9 @@
           this.player.bonusSpeed += speedAmount;
           this.player.boostTimer = this.SPEED_BOOST_DURATION;
 
-          const totalSpeed = this.player.baseSpeed + this.player.bonusSpeed;
+          const totalSpeed = this.player.baseSpeed + this.player.bonusSpeed + this.player.pickupSpeed;
           UIController.updateMoneyUI(this.player.money);
-          UIController.updateSpeedUI(totalSpeed, this.player.bonusSpeed, this.player.boostTimer);
+          UIController.updateSpeedUI(totalSpeed, this.player.bonusSpeed, this.player.boostTimer, this.player.pickupSpeed, this.player.pickupTimer);
           UIController.updateShopUI();
 
           this.syncHighScore();
@@ -1882,15 +1978,15 @@
         this.mudPuddles = [];
         this.obstacleMeshes = [];
 
-        const groundGeo = new THREE.BoxGeometry(this.WORLD_SIZE, 4, this.WORLD_SIZE);
-        const ground = new THREE.Mesh(groundGeo, this.materials.grass);
-        ground.position.y = -2;
-        ground.receiveShadow = true;
-        this.scene.add(ground);
+        const groundGeo = new THREE.BoxGeometry(this.BASE_WORLD_SIZE, 4, this.BASE_WORLD_SIZE);
+        this.groundMesh = new THREE.Mesh(groundGeo, this.materials.grass);
+        this.groundMesh.position.y = -2;
+        this.groundMesh.receiveShadow = true;
+        this.scene.add(this.groundMesh);
 
-        const grid = new THREE.GridHelper(this.WORLD_SIZE, this.WORLD_SIZE / 2, 0x444444, 0x555555);
-        grid.position.y = 0.02;
-        this.scene.add(grid);
+        this.gridHelper = new THREE.GridHelper(this.WORLD_SIZE, this.WORLD_SIZE / 2, 0x444444, 0x555555);
+        this.gridHelper.position.y = 0.02;
+        this.scene.add(this.gridHelper);
 
         this.buildSafeZone();
         this.generateObstacles();
@@ -2002,10 +2098,12 @@
         const buffer = this.SAFE_ZONE_RADIUS + 5;
         const halfWorld = this.WORLD_SIZE / 2 - 8;
         const isSwamp = this.isSwampTheme();
+        const isOutback = this.isOutbackTheme();
+        const worldMultiplier = (this.WORLD_SIZE > this.BASE_WORLD_SIZE) ? 2.5 : 1.0;
 
-        const TOTAL_TREES = isSwamp ? 145 : 75;
-        const TOTAL_ROCKS = isSwamp ? 80 : 45;
-        const TOTAL_MUD = isSwamp ? 44 : 30;
+        const TOTAL_TREES = Math.round((isSwamp ? 145 : (isOutback ? 60 : 75)) * worldMultiplier);
+        const TOTAL_ROCKS = Math.round((isSwamp ? 80 : (isOutback ? 55 : 45)) * worldMultiplier);
+        const TOTAL_MUD = Math.round((isSwamp ? 44 : (isOutback ? 36 : 30)) * worldMultiplier);
 
         const getRandomPos = () => {
           let x, z;
@@ -2020,8 +2118,9 @@
 
         for (let i = 0; i < TOTAL_MUD; i++) {
           const { x, z } = getRandomPos();
-          const w = (isSwamp ? 5 : 4) + Math.random() * 5;
-          const d = (isSwamp ? 5 : 4) + Math.random() * 5;
+          const baseSize = (isSwamp || isOutback) ? 5 : 4;
+          const w = baseSize + Math.random() * 5;
+          const d = baseSize + Math.random() * 5;
           
           const mudGeo = new THREE.BoxGeometry(w, 0.08, d);
           const mudMesh = new THREE.Mesh(mudGeo, this.materials.mud);
@@ -2040,7 +2139,7 @@
         // Rotsen (1 blok hoog, en voor de helft 2 of 3 blokken hoog om op te klimmen)
         for (let i = 0; i < TOTAL_ROCKS; i++) {
           const { x, z } = getRandomPos();
-          this.createVoxelRock(x, z, isSwamp);
+          this.createVoxelRock(x, z, isSwamp, isOutback);
         }
 
         // Bomen (hoog, niet beklimbaar)
@@ -2086,12 +2185,13 @@
       /* ==========================================================
          BEKLIMBARE VOXEL ROTSEN (1 Blok + Helft 2 of 3 Blokken Hoog)
          ========================================================== */
-      createVoxelRock(x, z, isSwamp = false) {
+      createVoxelRock(x, z, isSwamp = false, isOutback = false) {
         const rockGroup = new THREE.Group();
         rockGroup.position.set(x, 0, z);
 
-        const sizeX = 3.0 + Math.random() * 1.4;
-        const sizeZ = 2.6 + Math.random() * 1.4;
+        const plateauScale = isOutback ? 1.65 : 1.0;
+        const sizeX = (3.0 + Math.random() * 1.4) * plateauScale;
+        const sizeZ = (2.6 + Math.random() * 1.4) * plateauScale;
         const baseHeight = 1.0; // Eerste helft / basis: 1 blok hoog
 
         const matBase = Math.random() > 0.5 ? this.materials.rockDark : this.materials.rockLight;
@@ -2105,7 +2205,7 @@
         rockGroup.add(rockMesh);
 
         // Maak op de helft van de rots een verhoging van 2 of 3 blokken hoog
-        const hasUpperTier = isSwamp ? (Math.random() < 0.85) : (Math.random() < 0.65);
+        const hasUpperTier = (isSwamp || isOutback) ? (Math.random() < 0.85) : (Math.random() < 0.65);
         let tallMesh = null;
         let tallHeight = 2.0;
 
@@ -2145,7 +2245,8 @@
       },
 
       spawnEggField() {
-        while (this.eggs.length < this.MAX_EGGS) {
+        const targetEggs = (this.WORLD_SIZE > this.BASE_WORLD_SIZE) ? this.MAX_EGGS * 2 : this.MAX_EGGS;
+        while (this.eggs.length < targetEggs) {
           this.spawnSingleEgg();
         }
       },
@@ -2204,13 +2305,104 @@
         }
       },
 
+      spawnLightningField() {
+        const targetBolts = (this.WORLD_SIZE > this.BASE_WORLD_SIZE) ? this.MAX_LIGHTNING_BOLTS * 2 : this.MAX_LIGHTNING_BOLTS;
+        while (this.lightningBolts.length < targetBolts) {
+          this.spawnSingleLightningBolt();
+        }
+      },
+
+      createLightningBoltMesh() {
+        const boltGroup = new THREE.Group();
+
+        const topGeo = new THREE.BoxGeometry(0.32, 0.48, 0.22);
+        const topSeg = new THREE.Mesh(topGeo, this.materials.coinGold);
+        topSeg.position.set(0.14, 0.36, 0);
+        topSeg.rotation.z = -0.35;
+        topSeg.castShadow = true;
+        boltGroup.add(topSeg);
+
+        const midGeo = new THREE.BoxGeometry(0.46, 0.22, 0.22);
+        const midSeg = new THREE.Mesh(midGeo, this.materials.goldKiosk);
+        midSeg.position.set(0, 0.05, 0);
+        midSeg.castShadow = true;
+        boltGroup.add(midSeg);
+
+        const botGeo = new THREE.BoxGeometry(0.28, 0.52, 0.22);
+        const botSeg = new THREE.Mesh(botGeo, this.materials.coinGold);
+        botSeg.position.set(-0.14, -0.26, 0);
+        botSeg.rotation.z = -0.35;
+        botSeg.castShadow = true;
+        boltGroup.add(botSeg);
+
+        return boltGroup;
+      },
+
+      spawnSingleLightningBolt() {
+        const buffer = this.SAFE_ZONE_RADIUS + 8;
+        const halfWorld = this.WORLD_SIZE / 2 - 12;
+
+        let x, z;
+        let attempts = 0;
+        do {
+          x = (Math.random() - 0.5) * 2 * halfWorld;
+          z = (Math.random() - 0.5) * 2 * halfWorld;
+          attempts++;
+        } while (Math.abs(x) < buffer && Math.abs(z) < buffer && attempts < 100);
+
+        const boltMesh = this.createLightningBoltMesh();
+        boltMesh.position.set(x, 0.95, z);
+        this.scene.add(boltMesh);
+
+        this.lightningBolts.push({
+          mesh: boltMesh,
+          baseY: 0.95,
+          bobOffset: Math.random() * Math.PI * 2
+        });
+      },
+
+      updateLightningBolts(delta) {
+        const time = Date.now() * 0.004;
+        for (let i = 0; i < this.lightningBolts.length; i++) {
+          const bolt = this.lightningBolts[i];
+          bolt.mesh.rotation.y += delta * 2.8;
+          bolt.mesh.position.y = bolt.baseY + Math.sin(time + bolt.bobOffset) * 0.2;
+        }
+
+        if (!this.isInSafeZone(this.player.position)) {
+          for (let i = this.lightningBolts.length - 1; i >= 0; i--) {
+            const bolt = this.lightningBolts[i];
+            const dx = bolt.mesh.position.x - this.player.position.x;
+            const dz = bolt.mesh.position.z - this.player.position.z;
+            const distSq = dx * dx + dz * dz;
+
+            if (distSq < 2.25 && Math.abs(this.player.position.y - bolt.mesh.position.y) < 1.8) {
+              this.scene.remove(bolt.mesh);
+              this.lightningBolts.splice(i, 1);
+
+              this.player.pickupSpeed = this.PICKUP_BOOST_AMOUNT;
+              this.player.pickupTimer = this.PICKUP_BOOST_DURATION;
+
+              UIController.showToast(`⚡ BLIKSEMSCHICHT! +${this.PICKUP_BOOST_AMOUNT} Snelheid voor ${this.PICKUP_BOOST_DURATION}s!`, '#00e5ff');
+
+              setTimeout(() => {
+                if (this.isGameActive) this.spawnSingleLightningBolt();
+              }, 5000);
+              break;
+            }
+          }
+        }
+      },
+
       hatchEgg() {
-        const levelPool = ANIMAL_TYPES_BY_LEVEL[this.level] || ANIMAL_TYPES_BY_LEVEL[5];
+        const themeLvl = ((this.level - 1) % LEVEL_THEMES.length) + 1;
+        const levelPool = ANIMAL_TYPES_BY_LEVEL[themeLvl] || ANIMAL_TYPES_BY_LEVEL[6];
         const randomIndex = Math.floor(Math.random() * levelPool.length);
         const animalConfig = levelPool[randomIndex];
 
+        const round = this.getRoundNumber();
         const effectiveSpeedLevel = Math.min(this.level, 4);
-        const speedScale = 1 + (effectiveSpeedLevel - 1) * 0.20;
+        const speedScale = round >= 2 ? 1.65 : (1 + (effectiveSpeedLevel - 1) * 0.20);
         const scaledSpeed = animalConfig.baseSpeed * speedScale;
 
         const angle = this.player.mesh.rotation.y;
@@ -2352,6 +2544,34 @@
           const tail = new THREE.Mesh(tailGeo, featMat);
           tail.position.set(0, 0.35 * s, -0.75 * s);
           group.add(snout, tail);
+        } else if (config.type === 'koala') {
+          const earGeo = new THREE.BoxGeometry(0.26 * s, 0.26 * s, 0.12 * s);
+          const earL = new THREE.Mesh(earGeo, featMat);
+          earL.position.set(-0.34 * s, 0.98 * s, 0.52 * s);
+          const earR = new THREE.Mesh(earGeo, featMat);
+          earR.position.set(0.34 * s, 0.98 * s, 0.52 * s);
+          const noseGeo = new THREE.BoxGeometry(0.14 * s, 0.18 * s, 0.1 * s);
+          const nose = new THREE.Mesh(noseGeo, eyeMat);
+          nose.position.set(0, 0.78 * s, 0.85 * s);
+          group.add(earL, earR, nose);
+        } else if (config.type === 'platypus') {
+          const billGeo = new THREE.BoxGeometry(0.42 * s, 0.12 * s, 0.42 * s);
+          const bill = new THREE.Mesh(billGeo, featMat);
+          bill.position.set(0, 0.7 * s, 0.95 * s);
+          const tailGeo = new THREE.BoxGeometry(0.48 * s, 0.12 * s, 0.6 * s);
+          const tail = new THREE.Mesh(tailGeo, featMat);
+          tail.position.set(0, 0.3 * s, -0.72 * s);
+          group.add(bill, tail);
+        } else if (config.type === 'kangaroo') {
+          const earGeo = new THREE.BoxGeometry(0.13 * s, 0.42 * s, 0.1 * s);
+          const earL = new THREE.Mesh(earGeo, featMat);
+          earL.position.set(-0.18 * s, 1.22 * s, 0.52 * s);
+          const earR = new THREE.Mesh(earGeo, featMat);
+          earR.position.set(0.18 * s, 1.22 * s, 0.52 * s);
+          const tailGeo = new THREE.BoxGeometry(0.22 * s, 0.22 * s, 0.85 * s);
+          const tail = new THREE.Mesh(tailGeo, featMat);
+          tail.position.set(0, 0.32 * s, -0.82 * s);
+          group.add(earL, earR, tail);
         }
 
         const legGeo = new THREE.BoxGeometry(0.18 * s, 0.3 * s, 0.2 * s);
@@ -2487,6 +2707,8 @@
         this.player.slideVelX = 0;
         this.player.slideVelZ = 0;
         this.player.sinkDepth = 0;
+        this.player.pickupSpeed = 0;
+        this.player.pickupTimer = 0;
         this.player.isGrounded = true;
         this.player.standingOnRock = false;
       },
@@ -2644,7 +2866,7 @@
 
         UIController.updateStaminaUI((p.stamina / p.maxStamina) * 100, p.isExhausted, p.isSprinting);
 
-        // 3b. Tijdelijke Snelheidsboost Timer
+        // 3b. Tijdelijke Snelheidsboost Timers (Shop + Bliksemschicht-pickup)
         if (p.bonusSpeed > 0 && p.boostTimer > 0) {
           p.boostTimer -= delta;
           if (p.boostTimer <= 0) {
@@ -2655,15 +2877,26 @@
           }
         }
 
-        const effectiveBaseSpeed = p.baseSpeed + p.bonusSpeed;
+        if (p.pickupSpeed > 0 && p.pickupTimer > 0) {
+          p.pickupTimer -= delta;
+          if (p.pickupTimer <= 0) {
+            p.pickupTimer = 0;
+            p.pickupSpeed = 0;
+            if (UIController.isShopOpen) UIController.updateShopUI();
+          }
+        }
+
+        const effectiveBaseSpeed = p.baseSpeed + p.bonusSpeed + p.pickupSpeed;
         let currentSpeed = p.isSprinting ? (effectiveBaseSpeed * p.sprintMultiplier) : effectiveBaseSpeed;
 
         const inPuddle = !p.standingOnRock && this.isInMud(p.position);
         const isIce = this.isIceTheme();
         const isSwamp = this.isSwampTheme();
+        const isOutback = this.isOutbackTheme();
         const onIce = inPuddle && isIce;
         const onSwamp = inPuddle && isSwamp;
-        const inMud = inPuddle && !isIce && !isSwamp;
+        const inTar = inPuddle && isOutback;
+        const inMud = inPuddle && !isIce && !isSwamp && !isOutback;
 
         // Moeras wegzakken bijwerken
         if (onSwamp && p.velocityY <= 0) {
@@ -2678,6 +2911,8 @@
 
         if (inMud) {
           currentSpeed *= 0.5;
+        } else if (inTar) {
+          currentSpeed *= 0.4;
         } else if (onSwamp) {
           currentSpeed *= swampSlowFactor;
         } else if (onIce) {
@@ -2735,7 +2970,7 @@
           const baseAnimSpeed = p.isSprinting ? 24 : 14;
           const animSpeed = inMud
             ? baseAnimSpeed * 0.5
-            : (onSwamp ? baseAnimSpeed * swampSlowFactor : (onIce ? baseAnimSpeed * 1.35 : baseAnimSpeed));
+            : (inTar ? baseAnimSpeed * 0.4 : (onSwamp ? baseAnimSpeed * swampSlowFactor : (onIce ? baseAnimSpeed * 1.35 : baseAnimSpeed)));
           p.walkCycle += delta * animSpeed;
           p.leftLeg.rotation.x = Math.sin(p.walkCycle) * 0.7;
           p.rightLeg.rotation.x = -Math.sin(p.walkCycle) * 0.7;
@@ -2823,29 +3058,30 @@
         const activeInPuddle = !p.standingOnRock && this.isInMud(p.position);
         if (activeInPuddle && this.isLavaTheme()) {
           this.killPlayer('🔥 VERBRAND IN DE LAVA!');
-          UIController.updateZoneUI(true, false, false, false, 0);
-          UIController.updateSpeedUI(effectiveBaseSpeed, p.bonusSpeed, p.boostTimer);
+          UIController.updateZoneUI(true, false, false, false, 0, false);
+          UIController.updateSpeedUI(p.baseSpeed + p.bonusSpeed, p.bonusSpeed, p.boostTimer, 0, 0);
           return;
         }
 
         if (activeInPuddle && isSwamp && p.sinkDepth >= 1.2) {
           this.killPlayer('🌿 WEGGEZAKT IN HET MOERAS!');
-          UIController.updateZoneUI(true, false, false, false, 0);
-          UIController.updateSpeedUI(effectiveBaseSpeed, p.bonusSpeed, p.boostTimer);
+          UIController.updateZoneUI(true, false, false, false, 0, false);
+          UIController.updateSpeedUI(p.baseSpeed + p.bonusSpeed, p.bonusSpeed, p.boostTimer, 0, 0);
           return;
         }
 
         const activeOnIce = activeInPuddle && isIce;
         const activeOnSwamp = activeInPuddle && isSwamp;
-        const activeInMud = activeInPuddle && !isIce && !isSwamp;
+        const activeInTar = activeInPuddle && isOutback;
+        const activeInMud = activeInPuddle && !isIce && !isSwamp && !isOutback;
         const swampSinkPct = activeOnSwamp ? Math.min(100, Math.max(1, Math.round((p.sinkDepth / 1.2) * 100))) : 0;
 
-        UIController.updateZoneUI(this.isInSafeZone(p.position), p.standingOnRock, activeInMud, activeOnIce, swampSinkPct);
+        UIController.updateZoneUI(this.isInSafeZone(p.position), p.standingOnRock, activeInMud, activeOnIce, swampSinkPct, activeInTar);
 
         const hudSpeed = activeInMud
           ? effectiveBaseSpeed * 0.5
-          : (activeOnSwamp ? effectiveBaseSpeed * swampSlowFactor : (activeOnIce ? effectiveBaseSpeed * 1.6 : effectiveBaseSpeed));
-        UIController.updateSpeedUI(hudSpeed, p.bonusSpeed, p.boostTimer);
+          : (activeInTar ? effectiveBaseSpeed * 0.4 : (activeOnSwamp ? effectiveBaseSpeed * swampSlowFactor : (activeOnIce ? effectiveBaseSpeed * 1.6 : effectiveBaseSpeed)));
+        UIController.updateSpeedUI(hudSpeed, p.bonusSpeed, p.boostTimer, p.pickupSpeed, p.pickupTimer);
 
         // 8. Shop Proximity
         if (this.shopObject) {
@@ -2902,6 +3138,7 @@
           this.updatePlayer(delta);
           this.updateCamera(delta);
           this.updateEggs(delta);
+          this.updateLightningBolts(delta);
           this.updateChaser(delta);
           this.updateTamedPets(delta);
           this.updateEconomy(delta);
