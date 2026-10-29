@@ -1821,9 +1821,38 @@
         this.scene.add(this.sunLight);
       },
 
+      createGroundTexture() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 64;
+        canvas.height = 64;
+        const ctx = canvas.getContext('2d');
+
+        for (let y = 0; y < 16; y++) {
+          for (let x = 0; x < 16; x++) {
+            const shade = 228 + Math.floor(Math.random() * 28);
+            ctx.fillStyle = `rgb(${shade}, ${shade}, ${shade})`;
+            ctx.fillRect(x * 4, y * 4, 4, 4);
+            if (Math.random() < 0.28) {
+              const sp = shade - 14;
+              ctx.fillStyle = `rgb(${sp}, ${sp}, ${sp})`;
+              ctx.fillRect(x * 4 + 1, y * 4 + 1, 2, 2);
+            }
+          }
+        }
+
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.magFilter = THREE.NearestFilter;
+        tex.minFilter = THREE.NearestFilter;
+        tex.wrapS = THREE.RepeatWrapping;
+        tex.wrapT = THREE.RepeatWrapping;
+        tex.repeat.set(this.WORLD_SIZE / 8, this.WORLD_SIZE / 8);
+        return tex;
+      },
+
       initMaterials() {
+        this.groundTexture = this.createGroundTexture();
         this.materials = {
-          grass: new THREE.MeshLambertMaterial({ color: 0x5a9e32 }),
+          grass: new THREE.MeshLambertMaterial({ color: 0x5a9e32, map: this.groundTexture }),
           dirt: new THREE.MeshLambertMaterial({ color: 0x4e3620 }),
           safeFloor: new THREE.MeshLambertMaterial({ color: 0x26c6da }),
           safeFloorInner: new THREE.MeshLambertMaterial({ color: 0x80deea }),
@@ -1834,6 +1863,16 @@
           rockLight: new THREE.MeshLambertMaterial({ color: 0x757575 }),
           mud: new THREE.MeshLambertMaterial({ color: 0x3e2723 }),
           beacon: new THREE.MeshBasicMaterial({ color: 0xffeb3b }),
+
+          // Extra detail-materialen voor bomen, rotsen en ondergrond
+          flowerRed: new THREE.MeshLambertMaterial({ color: 0xff5252 }),
+          flowerYellow: new THREE.MeshLambertMaterial({ color: 0xffeb3b }),
+          snowWhite: new THREE.MeshLambertMaterial({ color: 0xffffff }),
+          iceCrystal: new THREE.MeshLambertMaterial({ color: 0x84ffff }),
+          lavaGlow: new THREE.MeshBasicMaterial({ color: 0xff9100 }),
+          mossGreen: new THREE.MeshLambertMaterial({ color: 0x558b2f }),
+          sandstoneStripe: new THREE.MeshLambertMaterial({ color: 0xe67e45 }),
+          coconutBrown: new THREE.MeshLambertMaterial({ color: 0x3e2723 }),
           
           playerShirt: new THREE.MeshLambertMaterial({ color: 0x1e88e5 }),
           playerSkin: new THREE.MeshLambertMaterial({ color: 0xffcc80 }),
@@ -1860,6 +1899,10 @@
           if (this.groundMesh) {
             const ratio = this.WORLD_SIZE / this.BASE_WORLD_SIZE;
             this.groundMesh.scale.set(ratio, 1, ratio);
+          }
+          if (this.groundTexture) {
+            this.groundTexture.repeat.set(this.WORLD_SIZE / 8, this.WORLD_SIZE / 8);
+            this.groundTexture.needsUpdate = true;
           }
           if (this.gridHelper) {
             this.scene.remove(this.gridHelper);
@@ -2120,6 +2163,8 @@
 
         const cornerPostH = 1.8;
         const cornerPostGeo = new THREE.BoxGeometry(1.2, cornerPostH, 1.2);
+        const capGeo = new THREE.BoxGeometry(1.5, 0.28, 1.5);
+        const lanternGeo = new THREE.BoxGeometry(0.65, 0.45, 0.65);
         const offset = this.SAFE_ZONE_RADIUS - 1.2;
         const cornerPositions = [
           [-offset, -offset],
@@ -2135,9 +2180,24 @@
           post.receiveShadow = true;
           group.add(post);
           this.registerCollider(post, false, cornerPostH + 0.4, true);
+
+          const cap = new THREE.Mesh(capGeo, this.materials.rockDark);
+          cap.position.set(px, cornerPostH + 0.54, pz);
+          cap.castShadow = true;
+          group.add(cap);
+
+          const lantern = new THREE.Mesh(lanternGeo, this.materials.beacon);
+          lantern.position.set(px, cornerPostH + 0.9, pz);
+          group.add(lantern);
         });
 
         this.buildSafeZoneFences(group, offset);
+
+        const pedestalBaseGeo = new THREE.BoxGeometry(2.8, 0.35, 2.8);
+        const pedestalBase = new THREE.Mesh(pedestalBaseGeo, this.materials.rockLight);
+        pedestalBase.position.set(0, 0.58, 0);
+        pedestalBase.castShadow = true;
+        group.add(pedestalBase);
 
         const pedestalGeo = new THREE.BoxGeometry(2, 1, 2);
         const pedestal = new THREE.Mesh(pedestalGeo, this.materials.rockDark);
@@ -2200,6 +2260,7 @@
 
         const buffer = this.SAFE_ZONE_RADIUS + 5;
         const halfWorld = this.WORLD_SIZE / 2 - 8;
+        const themeLvl = ((this.level - 1) % LEVEL_THEMES.length) + 1;
         const isSwamp = this.isSwampTheme();
         const isOutback = this.isOutbackTheme();
         const worldMultiplier = (this.WORLD_SIZE > this.BASE_WORLD_SIZE) ? 2.5 : 1.0;
@@ -2207,6 +2268,7 @@
         const TOTAL_TREES = Math.round((isSwamp ? 145 : (isOutback ? 60 : 75)) * worldMultiplier);
         const TOTAL_ROCKS = Math.round((isSwamp ? 80 : (isOutback ? 55 : 45)) * worldMultiplier);
         const TOTAL_MUD = Math.round((isSwamp ? 44 : (isOutback ? 36 : 30)) * worldMultiplier);
+        const TOTAL_CLUTTER = Math.round(140 * worldMultiplier);
 
         const getRandomPos = () => {
           let x, z;
@@ -2225,40 +2287,169 @@
           const w = baseSize + Math.random() * 5;
           const d = baseSize + Math.random() * 5;
           
+          const puddleGroup = new THREE.Group();
+          puddleGroup.position.set(x, 0, z);
+
+          // Buitenrand / oever van de plas
+          const rimGeo = new THREE.BoxGeometry(w + 0.5, 0.05, d + 0.5);
+          const rimMat = (themeLvl === 2) ? this.materials.snowWhite : ((themeLvl === 4) ? this.materials.rockDark : this.materials.dirt);
+          const rimMesh = new THREE.Mesh(rimGeo, rimMat);
+          rimMesh.position.set(0, 0.025, 0);
+          rimMesh.receiveShadow = true;
+          puddleGroup.add(rimMesh);
+
+          // Hoofdplas
           const mudGeo = new THREE.BoxGeometry(w, 0.08, d);
           const mudMesh = new THREE.Mesh(mudGeo, this.materials.mud);
-          mudMesh.position.set(x, 0.04, z);
+          mudMesh.position.set(0, 0.04, 0);
           mudMesh.receiveShadow = true;
-          this.scene.add(mudMesh);
-          this.obstacleMeshes.push(mudMesh);
+          puddleGroup.add(mudMesh);
 
-          mudMesh.updateWorldMatrix(true, true);
-          const mudBox = new THREE.Box3().setFromObject(mudMesh);
-          mudBox.min.y = -2.0;
-          mudBox.max.y = 0.5;
+          // Tweede overlappende lob voor een natuurlijker, grilliger silhouet
+          const lobeGeo = new THREE.BoxGeometry(w * 0.65, 0.085, d * 0.65);
+          const lobeMesh = new THREE.Mesh(lobeGeo, this.materials.mud);
+          const lobeSideX = (Math.random() < 0.5 ? 1 : -1) * (w * 0.25);
+          const lobeSideZ = (Math.random() < 0.5 ? 1 : -1) * (d * 0.25);
+          lobeMesh.position.set(lobeSideX, 0.042, lobeSideZ);
+          lobeMesh.receiveShadow = true;
+          puddleGroup.add(lobeMesh);
+
+          // Thema-specifieke details in de plas
+          if (themeLvl === 2) {
+            // IJsschots-glinsteringen
+            const glintGeo = new THREE.BoxGeometry(w * 0.4, 0.095, 0.25);
+            const glint = new THREE.Mesh(glintGeo, this.materials.snowWhite);
+            glint.position.set(0, 0.048, 0);
+            puddleGroup.add(glint);
+          } else if (themeLvl === 4) {
+            // Gloeiende lavabubbels
+            for (let b = 0; b < 3; b++) {
+              const bubGeo = new THREE.BoxGeometry(0.45, 0.14, 0.45);
+              const bub = new THREE.Mesh(bubGeo, this.materials.lavaGlow);
+              bub.position.set((Math.random() - 0.5) * (w * 0.6), 0.08, (Math.random() - 0.5) * (d * 0.6));
+              puddleGroup.add(bub);
+            }
+          } else if (themeLvl === 5) {
+            // Waterleliebladeren en rietstengels in het moeras
+            for (let l = 0; l < 2; l++) {
+              const padGeo = new THREE.BoxGeometry(0.75, 0.095, 0.75);
+              const pad = new THREE.Mesh(padGeo, this.materials.leavesHighlight);
+              pad.position.set((Math.random() - 0.5) * (w * 0.55), 0.05, (Math.random() - 0.5) * (d * 0.55));
+              puddleGroup.add(pad);
+            }
+            const reedGeo = new THREE.BoxGeometry(0.14, 0.85, 0.14);
+            const reed = new THREE.Mesh(reedGeo, this.materials.leaves);
+            reed.position.set(w * 0.42, 0.42, d * 0.35);
+            puddleGroup.add(reed);
+          } else if (themeLvl === 6) {
+            // Droge rotskorstjes aan de rand van de teer-/stofkuil
+            const crustGeo = new THREE.BoxGeometry(0.6, 0.16, 0.5);
+            const crust = new THREE.Mesh(crustGeo, this.materials.rockDark);
+            crust.position.set(-w * 0.38, 0.08, d * 0.32);
+            puddleGroup.add(crust);
+          }
+
+          this.scene.add(puddleGroup);
+          this.obstacleMeshes.push(puddleGroup);
+
+          puddleGroup.updateWorldMatrix(true, true);
+          const mudBox = new THREE.Box3(
+            new THREE.Vector3(x - w / 2, -2.0, z - d / 2),
+            new THREE.Vector3(x + w / 2, 0.5, z + d / 2)
+          );
           this.mudPuddles.push(mudBox);
+        }
+
+        // Ondergrond-decoraties (graspolletjes, bloemen, steentjes, paddenstoelen - zonder botsing)
+        for (let i = 0; i < TOTAL_CLUTTER; i++) {
+          const { x, z } = getRandomPos();
+          this.createGroundClutter(x, z, themeLvl);
         }
 
         // Rotsen (1 blok hoog, en voor de helft 2 of 3 blokken hoog om op te klimmen)
         for (let i = 0; i < TOTAL_ROCKS; i++) {
           const { x, z } = getRandomPos();
-          this.createVoxelRock(x, z, isSwamp, isOutback);
+          this.createVoxelRock(x, z, isSwamp, isOutback, themeLvl);
         }
 
         // Bomen (hoog, niet beklimbaar)
         for (let i = 0; i < TOTAL_TREES; i++) {
           const { x, z } = getRandomPos();
-          this.createVoxelTree(x, z);
+          this.createVoxelTree(x, z, themeLvl);
         }
       },
 
-      createVoxelTree(x, z) {
+      createGroundClutter(x, z, themeLvl) {
+        const clutterGroup = new THREE.Group();
+        clutterGroup.position.set(x, 0, z);
+
+        if (themeLvl === 1 || themeLvl === 5) {
+          // Graspolletjes, bloemetjes of paddenstoeltjes
+          const roll = Math.random();
+          if (roll < 0.55) {
+            const blade1 = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.38, 0.16), this.materials.leavesHighlight);
+            blade1.position.set(-0.1, 0.19, 0);
+            const blade2 = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.28, 0.14), this.materials.leaves);
+            blade2.position.set(0.12, 0.14, 0.08);
+            clutterGroup.add(blade1, blade2);
+          } else if (roll < 0.82) {
+            const stem = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.26, 0.1), this.materials.leaves);
+            stem.position.set(0, 0.13, 0);
+            const petalMat = Math.random() < 0.5 ? this.materials.flowerRed : this.materials.flowerYellow;
+            const flower = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.14, 0.24), petalMat);
+            flower.position.set(0, 0.28, 0);
+            clutterGroup.add(stem, flower);
+          } else {
+            const stalk = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.22, 0.14), this.materials.snowWhite);
+            stalk.position.set(0, 0.11, 0);
+            const cap = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.14, 0.34), this.materials.flowerRed);
+            cap.position.set(0, 0.24, 0);
+            clutterGroup.add(stalk, cap);
+          }
+        } else if (themeLvl === 2) {
+          // Sneeuwhopjes en kleine ijskristallen
+          const crystal = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.42, 0.22), this.materials.iceCrystal);
+          crystal.position.set(0, 0.21, 0);
+          crystal.rotation.y = 0.6;
+          const drift = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.12, 0.35), this.materials.snowWhite);
+          drift.position.set(0.15, 0.06, 0.1);
+          clutterGroup.add(crystal, drift);
+        } else if (themeLvl === 3 || themeLvl === 6) {
+          // Woestijn-/Outback-struikjes en zandsteentjes
+          if (Math.random() < 0.55) {
+            const shrub1 = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.28, 0.38), this.materials.leaves);
+            shrub1.position.set(0, 0.14, 0);
+            const shrub2 = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.36, 0.24), this.materials.leavesHighlight);
+            shrub2.position.set(0.08, 0.18, -0.06);
+            clutterGroup.add(shrub1, shrub2);
+          } else {
+            const pebble1 = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.16, 0.26), this.materials.rockDark);
+            pebble1.position.set(0, 0.08, 0);
+            const pebble2 = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.12, 0.2), this.materials.rockLight);
+            pebble2.position.set(0.2, 0.06, 0.12);
+            clutterGroup.add(pebble1, pebble2);
+          }
+        } else if (themeLvl === 4) {
+          // Gloeiende sintels en obsidiaan-steentjes
+          const shard = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.26, 0.28), this.materials.rockDark);
+          shard.position.set(0, 0.13, 0);
+          const ember = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.16, 0.16), this.materials.lavaGlow);
+          ember.position.set(0.14, 0.08, 0.14);
+          clutterGroup.add(shard, ember);
+        }
+
+        this.scene.add(clutterGroup);
+        this.obstacleMeshes.push(clutterGroup);
+      },
+
+      createVoxelTree(x, z, themeLvl = 1) {
         const treeGroup = new THREE.Group();
         treeGroup.position.set(x, 0, z);
 
         const trunkHeight = 4.5 + Math.floor(Math.random() * 2);
         const trunkWidth = 1.4;
 
+        // Hoofdstam
         const trunkGeo = new THREE.BoxGeometry(trunkWidth, trunkHeight, trunkWidth);
         const trunkMesh = new THREE.Mesh(trunkGeo, this.materials.woodTrunk);
         trunkMesh.position.set(0, trunkHeight / 2, 0);
@@ -2266,18 +2457,102 @@
         trunkMesh.receiveShadow = true;
         treeGroup.add(trunkMesh);
 
+        // Wortelblokjes aan de voet van de stam
+        const rootOffsets = [
+          [trunkWidth * 0.55, 0.22, 0, 0.45, 0.44, 0.55],
+          [-trunkWidth * 0.55, 0.18, 0, 0.42, 0.36, 0.5],
+          [0, 0.2, trunkWidth * 0.55, 0.55, 0.4, 0.45],
+          [0, 0.16, -trunkWidth * 0.55, 0.5, 0.32, 0.42]
+        ];
+        rootOffsets.forEach(([rx, ry, rz, rw, rh, rd]) => {
+          const rootMesh = new THREE.Mesh(new THREE.BoxGeometry(rw, rh, rd), this.materials.woodTrunk);
+          rootMesh.position.set(rx, ry, rz);
+          rootMesh.castShadow = true;
+          treeGroup.add(rootMesh);
+        });
+
+        // Zijtak met eigen klein bladercluster
+        const branchSide = Math.random() < 0.5 ? 1 : -1;
+        const branchY = trunkHeight * 0.62;
+        const branchArm = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.42, 0.42), this.materials.woodTrunk);
+        branchArm.position.set(branchSide * (trunkWidth * 0.5 + 0.38), branchY, 0);
+        branchArm.castShadow = true;
+        treeGroup.add(branchArm);
+
+        const subCrown = new THREE.Mesh(new THREE.BoxGeometry(1.5, 1.1, 1.5), this.materials.leaves);
+        subCrown.position.set(branchSide * (trunkWidth * 0.5 + 0.85), branchY + 0.45, 0);
+        subCrown.castShadow = true;
+        treeGroup.add(subCrown);
+
+        // Gelaagde bladerkroon (3 lagen voor rijk voxel-silhouet)
         const crownWidth = 3.6 + Math.random() * 0.8;
-        const leavesBottomGeo = new THREE.BoxGeometry(crownWidth, 2.5, crownWidth);
+        const leavesBottomGeo = new THREE.BoxGeometry(crownWidth, 1.8, crownWidth);
         const leavesBottom = new THREE.Mesh(leavesBottomGeo, this.materials.leaves);
-        leavesBottom.position.set(0, trunkHeight + 1.2, 0);
+        leavesBottom.position.set(0, trunkHeight + 0.85, 0);
         leavesBottom.castShadow = true;
         treeGroup.add(leavesBottom);
 
-        const leavesTopGeo = new THREE.BoxGeometry(crownWidth * 0.65, 1.5, crownWidth * 0.65);
-        const leavesTop = new THREE.Mesh(leavesTopGeo, this.materials.leavesHighlight);
-        leavesTop.position.set(0, trunkHeight + 2.8, 0);
+        const leavesMidGeo = new THREE.BoxGeometry(crownWidth * 0.84, 1.4, crownWidth * 0.84);
+        const leavesMid = new THREE.Mesh(leavesMidGeo, this.materials.leavesHighlight);
+        leavesMid.position.set(0, trunkHeight + 2.1, 0);
+        leavesMid.castShadow = true;
+        treeGroup.add(leavesMid);
+
+        const leavesTopGeo = new THREE.BoxGeometry(crownWidth * 0.52, 1.1, crownWidth * 0.52);
+        const leavesTop = new THREE.Mesh(leavesTopGeo, this.materials.leaves);
+        leavesTop.position.set(0, trunkHeight + 3.1, 0);
         leavesTop.castShadow = true;
         treeGroup.add(leavesTop);
+
+        // Thema-specifieke boomdetails
+        if (themeLvl === 1) {
+          // Rode vruchten/appeltjes in de bosbomen
+          const fruitCoords = [
+            [crownWidth * 0.48, trunkHeight + 0.4, crownWidth * 0.25],
+            [-crownWidth * 0.48, trunkHeight + 0.7, -crownWidth * 0.2],
+            [crownWidth * 0.2, trunkHeight + 1.5, -crownWidth * 0.44]
+          ];
+          fruitCoords.forEach(([fx, fy, fz]) => {
+            const fruit = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.28, 0.28), this.materials.flowerRed);
+            fruit.position.set(fx, fy, fz);
+            treeGroup.add(fruit);
+          });
+        } else if (themeLvl === 2) {
+          // Sneeuwlaag bovenop de boomkroon
+          const snowCap = new THREE.Mesh(new THREE.BoxGeometry(crownWidth * 0.56, 0.22, crownWidth * 0.56), this.materials.snowWhite);
+          snowCap.position.set(0, trunkHeight + 3.72, 0);
+          treeGroup.add(snowCap);
+        } else if (themeLvl === 3) {
+          // Kokosnoten onder de kruin
+          const nut1 = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.32, 0.32), this.materials.coconutBrown);
+          nut1.position.set(0.75, trunkHeight - 0.1, 0.65);
+          const nut2 = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.3, 0.3), this.materials.coconutBrown);
+          nut2.position.set(-0.7, trunkHeight - 0.12, -0.65);
+          treeGroup.add(nut1, nut2);
+        } else if (themeLvl === 4) {
+          // Gloeiende sintels in de vulkaanbomen
+          const ember = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.35, 0.35), this.materials.lavaGlow);
+          ember.position.set(crownWidth * 0.42, trunkHeight + 1.1, 0);
+          treeGroup.add(ember);
+        } else if (themeLvl === 5) {
+          // Hangende lianen langs de moerasbomen
+          const vinePositions = [
+            [crownWidth * 0.46, trunkHeight - 0.5, crownWidth * 0.3],
+            [-crownWidth * 0.46, trunkHeight - 0.7, -crownWidth * 0.25],
+            [crownWidth * 0.25, trunkHeight - 0.6, -crownWidth * 0.46]
+          ];
+          vinePositions.forEach(([vx, vy, vz]) => {
+            const vine = new THREE.Mesh(new THREE.BoxGeometry(0.18, 1.8, 0.18), this.materials.leavesHighlight);
+            vine.position.set(vx, vy, vz);
+            treeGroup.add(vine);
+          });
+        } else if (themeLvl === 6) {
+          // Extra eucalyptus-bladertuft opzij
+          const eucCluster = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.9, 1.4), this.materials.leavesHighlight);
+          eucCluster.position.set(-branchSide * (crownWidth * 0.45), trunkHeight + 1.5, 0.4);
+          eucCluster.castShadow = true;
+          treeGroup.add(eucCluster);
+        }
 
         this.scene.add(treeGroup);
         this.obstacleMeshes.push(treeGroup);
@@ -2288,7 +2563,7 @@
       /* ==========================================================
          BEKLIMBARE VOXEL ROTSEN (1 Blok + Helft 2 of 3 Blokken Hoog)
          ========================================================== */
-      createVoxelRock(x, z, isSwamp = false, isOutback = false) {
+      createVoxelRock(x, z, isSwamp = false, isOutback = false, themeLvl = 1) {
         const rockGroup = new THREE.Group();
         rockGroup.position.set(x, 0, z);
 
@@ -2307,16 +2582,26 @@
         rockMesh.receiveShadow = true;
         rockGroup.add(rockMesh);
 
+        // Visuele keien / steunblokjes aan de voet van de rots
+        const skirt1 = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.42, 0.65), matTop);
+        skirt1.position.set(sizeX * 0.46, 0.21, sizeZ * 0.42);
+        skirt1.castShadow = true;
+        const skirt2 = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.34, 0.55), matBase);
+        skirt2.position.set(-sizeX * 0.46, 0.17, -sizeZ * 0.4);
+        skirt2.castShadow = true;
+        rockGroup.add(skirt1, skirt2);
+
         // Maak op de helft van de rots een verhoging van 2 of 3 blokken hoog
         const hasUpperTier = (isSwamp || isOutback) ? (Math.random() < 0.85) : (Math.random() < 0.65);
         let tallMesh = null;
         let tallHeight = 2.0;
+        let offsetX = 0;
+        let halfX = sizeX * 0.5;
 
         if (hasUpperTier) {
           tallHeight = Math.random() < 0.5 ? 2.0 : 3.0;
-          const halfX = sizeX * 0.5;
           const side = Math.random() < 0.5 ? 1 : -1;
-          const offsetX = side * (sizeX * 0.25);
+          offsetX = side * (sizeX * 0.25);
 
           const tallGeo = new THREE.BoxGeometry(halfX, tallHeight, sizeZ);
           tallMesh = new THREE.Mesh(tallGeo, matTop);
@@ -2324,6 +2609,33 @@
           tallMesh.castShadow = true;
           tallMesh.receiveShadow = true;
           rockGroup.add(tallMesh);
+        }
+
+        // Thema-accenten op de rots (zeer dun zodat klimhoogte gelijk blijft)
+        const topSurfaceY = hasUpperTier ? tallHeight : baseHeight;
+        const topCenterX = hasUpperTier ? offsetX : 0;
+        const topSpanX = hasUpperTier ? halfX : sizeX;
+
+        if (themeLvl === 1 || themeLvl === 5) {
+          // Mosplakkaatje bovenop de rots
+          const moss = new THREE.Mesh(new THREE.BoxGeometry(topSpanX * 0.55, 0.05, sizeZ * 0.5), this.materials.mossGreen);
+          moss.position.set(topCenterX, topSurfaceY + 0.025, 0);
+          rockGroup.add(moss);
+        } else if (themeLvl === 2) {
+          // Sneeuwlaagje op de rots
+          const snow = new THREE.Mesh(new THREE.BoxGeometry(topSpanX * 0.75, 0.06, sizeZ * 0.75), this.materials.snowWhite);
+          snow.position.set(topCenterX, topSurfaceY + 0.03, 0);
+          rockGroup.add(snow);
+        } else if (themeLvl === 4) {
+          // Gloeiende magma-ader bovenop de rots
+          const vein = new THREE.Mesh(new THREE.BoxGeometry(topSpanX * 0.6, 0.05, 0.22), this.materials.lavaGlow);
+          vein.position.set(topCenterX, topSurfaceY + 0.025, 0);
+          rockGroup.add(vein);
+        } else if (themeLvl === 6) {
+          // Uluru-stijl horizontale zandsteenlaag rondom
+          const band = new THREE.Mesh(new THREE.BoxGeometry(sizeX + 0.06, 0.18, sizeZ + 0.06), this.materials.sandstoneStripe);
+          band.position.set(0, 0.55, 0);
+          rockGroup.add(band);
         }
 
         this.scene.add(rockGroup);
