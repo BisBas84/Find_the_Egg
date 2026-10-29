@@ -1388,10 +1388,10 @@
         this.hudPets.textContent = count;
       },
 
-      setChaseAlert(active, animalName = '') {
+      setChaseAlert(active, animalName = '', article = 'de') {
         if (active) {
           this.hudChaseWarning.style.display = 'block';
-          this.hudChaseWarning.textContent = `🚨 VLUCHT VOOR DE ${animalName.toUpperCase()}!`;
+          this.hudChaseWarning.textContent = `🚨 VLUCHT VOOR ${article.toUpperCase()} ${animalName.toUpperCase()}!`;
         } else {
           this.hudChaseWarning.style.display = 'none';
         }
@@ -1574,46 +1574,46 @@
        ========================================================== */
     const ANIMAL_TYPES_BY_LEVEL = {
       1: [ // Level 1: Het Bos
-        { id: 'duck', name: 'Eend', baseSpeed: 8.5, baseIncome: 2, bodyColor: 0xffeb3b, headColor: 0xfbc02d, featureColor: 0xff9800, scale: 0.65, type: 'beak' },
-        { id: 'rabbit', name: 'Konijn', baseSpeed: 10.8, baseIncome: 10, bodyColor: 0xeeeeee, headColor: 0xe0e0e0, featureColor: 0xff80ab, scale: 0.65, type: 'ears_long' },
-        { id: 'fox', name: 'Vos', baseSpeed: 13.0, baseIncome: 30, bodyColor: 0xe65100, headColor: 0xff6d00, featureColor: 0xffffff, scale: 0.8, type: 'ears_pointed' },
-        { id: 'deer', name: 'Hert', baseSpeed: 15.2, baseIncome: 80, bodyColor: 0x8d6e63, headColor: 0x795548, featureColor: 0xd7ccc8, scale: 0.95, type: 'antlers' },
-        { id: 'brown_bear', name: 'Bruine Beer', baseSpeed: 17.5, baseIncome: 160, bodyColor: 0x5d4037, headColor: 0x4e342e, featureColor: 0x3e2723, scale: 1.2, type: 'bear' }
+        { id: 'duck', name: 'Eend', article: 'de', baseSpeed: 8.5, baseIncome: 2, bodyColor: 0xffeb3b, headColor: 0xfbc02d, featureColor: 0xff9800, scale: 0.65, type: 'beak' },
+        { id: 'rabbit', name: 'Konijn', article: 'het', baseSpeed: 10.8, baseIncome: 10, bodyColor: 0xeeeeee, headColor: 0xe0e0e0, featureColor: 0xff80ab, scale: 0.65, type: 'ears_long' },
+        { id: 'fox', name: 'Vos', article: 'de', baseSpeed: 13.0, baseIncome: 30, bodyColor: 0xe65100, headColor: 0xff6d00, featureColor: 0xffffff, scale: 0.8, type: 'ears_pointed' },
+        { id: 'deer', name: 'Hert', article: 'het', baseSpeed: 15.2, baseIncome: 80, bodyColor: 0x8d6e63, headColor: 0x795548, featureColor: 0xd7ccc8, scale: 0.95, type: 'antlers' },
+        { id: 'brown_bear', name: 'Bruine Beer', article: 'de', baseSpeed: 17.5, baseIncome: 160, bodyColor: 0x5d4037, headColor: 0x4e342e, featureColor: 0x3e2723, scale: 1.2, type: 'bear' }
       ],
       2: [ // Level 2: Sneeuw & IJs
-        { id: 'penguin', name: 'Pinguïn', baseSpeed: 8.5, baseIncome: 2, bodyColor: 0x263238, headColor: 0x1c262b, featureColor: 0xffb300, scale: 0.65, type: 'beak' },
-        { id: 'snow_hare', name: 'Sneeuwhaas', baseSpeed: 10.8, baseIncome: 10, bodyColor: 0xffffff, headColor: 0xf5f5f5, featureColor: 0xb2ebf2, scale: 0.68, type: 'ears_long' },
-        { id: 'arctic_fox', name: 'Poolvos', baseSpeed: 13.0, baseIncome: 30, bodyColor: 0xe0f7fa, headColor: 0xffffff, featureColor: 0x80deea, scale: 0.8, type: 'ears_pointed' },
-        { id: 'reindeer', name: 'Rendier', baseSpeed: 15.2, baseIncome: 80, bodyColor: 0xa1887f, headColor: 0x8d6e63, featureColor: 0xefebe9, scale: 1.0, type: 'antlers' },
-        { id: 'polar_bear', name: 'IJsbeer', baseSpeed: 17.5, baseIncome: 160, bodyColor: 0xfafafa, headColor: 0xffffff, featureColor: 0xcfd8dc, scale: 1.25, type: 'bear' }
+        { id: 'penguin', name: 'Pinguïn', article: 'de', baseSpeed: 8.5, baseIncome: 2, bodyColor: 0x263238, headColor: 0x1c262b, featureColor: 0xffb300, scale: 0.65, type: 'beak' },
+        { id: 'snow_hare', name: 'Sneeuwhaas', article: 'de', baseSpeed: 10.8, baseIncome: 10, bodyColor: 0xffffff, headColor: 0xf5f5f5, featureColor: 0xb2ebf2, scale: 0.68, type: 'ears_long' },
+        { id: 'arctic_fox', name: 'Poolvos', article: 'de', baseSpeed: 13.0, baseIncome: 30, bodyColor: 0xe0f7fa, headColor: 0xffffff, featureColor: 0x80deea, scale: 0.8, type: 'ears_pointed' },
+        { id: 'reindeer', name: 'Rendier', article: 'het', baseSpeed: 15.2, baseIncome: 80, bodyColor: 0xa1887f, headColor: 0x8d6e63, featureColor: 0xefebe9, scale: 1.0, type: 'antlers' },
+        { id: 'polar_bear', name: 'IJsbeer', article: 'de', baseSpeed: 17.5, baseIncome: 160, bodyColor: 0xfafafa, headColor: 0xffffff, featureColor: 0xcfd8dc, scale: 1.25, type: 'bear' }
       ],
       3: [ // Level 3: Woestijn
-        { id: 'scorpion', name: 'Schorpioen', baseSpeed: 8.5, baseIncome: 2, bodyColor: 0x4e342e, headColor: 0x3e2723, featureColor: 0xd84315, scale: 0.7, type: 'scorpion' },
-        { id: 'fennec', name: 'Woestijnvos', baseSpeed: 10.8, baseIncome: 10, bodyColor: 0xffe082, headColor: 0xffd54f, featureColor: 0xffab40, scale: 0.72, type: 'ears_long' },
-        { id: 'ostrich', name: 'Struisvogel', baseSpeed: 13.0, baseIncome: 30, bodyColor: 0x424242, headColor: 0xf5f5f5, featureColor: 0xff9800, scale: 0.95, type: 'beak' },
-        { id: 'camel', name: 'Kameel', baseSpeed: 15.2, baseIncome: 80, bodyColor: 0xd7a86e, headColor: 0xc69255, featureColor: 0x8d5b2b, scale: 1.1, type: 'hump' },
-        { id: 'lion', name: 'Leeuw', baseSpeed: 17.5, baseIncome: 160, bodyColor: 0xffb300, headColor: 0xff8f00, featureColor: 0x5d4037, scale: 1.15, type: 'mane' }
+        { id: 'scorpion', name: 'Schorpioen', article: 'de', baseSpeed: 8.5, baseIncome: 2, bodyColor: 0x4e342e, headColor: 0x3e2723, featureColor: 0xd84315, scale: 0.7, type: 'scorpion' },
+        { id: 'fennec', name: 'Woestijnvos', article: 'de', baseSpeed: 10.8, baseIncome: 10, bodyColor: 0xffe082, headColor: 0xffd54f, featureColor: 0xffab40, scale: 0.72, type: 'ears_long' },
+        { id: 'ostrich', name: 'Struisvogel', article: 'de', baseSpeed: 13.0, baseIncome: 30, bodyColor: 0x424242, headColor: 0xf5f5f5, featureColor: 0xff9800, scale: 0.95, type: 'beak' },
+        { id: 'camel', name: 'Kameel', article: 'de', baseSpeed: 15.2, baseIncome: 80, bodyColor: 0xd7a86e, headColor: 0xc69255, featureColor: 0x8d5b2b, scale: 1.1, type: 'hump' },
+        { id: 'lion', name: 'Leeuw', article: 'de', baseSpeed: 17.5, baseIncome: 160, bodyColor: 0xffb300, headColor: 0xff8f00, featureColor: 0x5d4037, scale: 1.15, type: 'mane' }
       ],
       4: [ // Level 4: Obsidiaan & Lava
-        { id: 'fire_beetle', name: 'Vuurkever', baseSpeed: 8.5, baseIncome: 2, bodyColor: 0xb71c1c, headColor: 0x212121, featureColor: 0xff6d00, scale: 0.68, type: 'horns' },
-        { id: 'fire_salamander', name: 'Vuursalamander', baseSpeed: 10.8, baseIncome: 10, bodyColor: 0xff3d00, headColor: 0xdd2c00, featureColor: 0xffea00, scale: 0.8, type: 'croc' },
-        { id: 'hellhound', name: 'Hellehond', baseSpeed: 13.0, baseIncome: 30, bodyColor: 0x212121, headColor: 0x37474f, featureColor: 0xff1744, scale: 0.92, type: 'ears_pointed' },
-        { id: 'magma_golem', name: 'Magma-Golem', baseSpeed: 15.2, baseIncome: 80, bodyColor: 0x37474f, headColor: 0x263238, featureColor: 0xff6d00, scale: 1.15, type: 'horns' },
-        { id: 'fire_dragon', name: 'Vuur-Draak', baseSpeed: 17.5, baseIncome: 160, bodyColor: 0xd50000, headColor: 0xb71c1c, featureColor: 0xffab00, scale: 1.25, type: 'dragon' }
+        { id: 'fire_beetle', name: 'Vuurkever', article: 'de', baseSpeed: 8.5, baseIncome: 2, bodyColor: 0xb71c1c, headColor: 0x212121, featureColor: 0xff6d00, scale: 0.68, type: 'horns' },
+        { id: 'fire_salamander', name: 'Vuursalamander', article: 'de', baseSpeed: 10.8, baseIncome: 10, bodyColor: 0xff3d00, headColor: 0xdd2c00, featureColor: 0xffea00, scale: 0.8, type: 'croc' },
+        { id: 'hellhound', name: 'Hellehond', article: 'de', baseSpeed: 13.0, baseIncome: 30, bodyColor: 0x212121, headColor: 0x37474f, featureColor: 0xff1744, scale: 0.92, type: 'ears_pointed' },
+        { id: 'magma_golem', name: 'Magma-Golem', article: 'de', baseSpeed: 15.2, baseIncome: 80, bodyColor: 0x37474f, headColor: 0x263238, featureColor: 0xff6d00, scale: 1.15, type: 'horns' },
+        { id: 'fire_dragon', name: 'Vuur-Draak', article: 'de', baseSpeed: 17.5, baseIncome: 160, bodyColor: 0xd50000, headColor: 0xb71c1c, featureColor: 0xffab00, scale: 1.25, type: 'dragon' }
       ],
       5: [ // Level 5: Moeras & Jungle
-        { id: 'poison_frog', name: 'Gifkikker', baseSpeed: 8.5, baseIncome: 2, bodyColor: 0x00e676, headColor: 0x00c853, featureColor: 0x2979ff, scale: 0.65, type: 'bear' },
-        { id: 'toucan', name: 'Toekan', baseSpeed: 10.8, baseIncome: 10, bodyColor: 0x212121, headColor: 0x111111, featureColor: 0xff9100, scale: 0.72, type: 'toucan' },
-        { id: 'capybara', name: 'Capybara', baseSpeed: 13.0, baseIncome: 30, bodyColor: 0xa1887f, headColor: 0x8d6e63, featureColor: 0x4e342e, scale: 0.95, type: 'bear' },
-        { id: 'crocodile', name: 'Krokodil', baseSpeed: 15.2, baseIncome: 80, bodyColor: 0x2e7d32, headColor: 0x1b5e20, featureColor: 0x81c784, scale: 1.05, type: 'croc' },
-        { id: 'black_panther', name: 'Zwarte Panter', baseSpeed: 17.5, baseIncome: 160, bodyColor: 0x1a1a1a, headColor: 0x111111, featureColor: 0xffd600, scale: 1.15, type: 'ears_pointed' }
+        { id: 'poison_frog', name: 'Gifkikker', article: 'de', baseSpeed: 8.5, baseIncome: 2, bodyColor: 0x00e676, headColor: 0x00c853, featureColor: 0x2979ff, scale: 0.65, type: 'bear' },
+        { id: 'toucan', name: 'Toekan', article: 'de', baseSpeed: 10.8, baseIncome: 10, bodyColor: 0x212121, headColor: 0x111111, featureColor: 0xff9100, scale: 0.72, type: 'toucan' },
+        { id: 'capybara', name: 'Capybara', article: 'de', baseSpeed: 13.0, baseIncome: 30, bodyColor: 0xa1887f, headColor: 0x8d6e63, featureColor: 0x4e342e, scale: 0.95, type: 'bear' },
+        { id: 'crocodile', name: 'Krokodil', article: 'de', baseSpeed: 15.2, baseIncome: 80, bodyColor: 0x2e7d32, headColor: 0x1b5e20, featureColor: 0x81c784, scale: 1.05, type: 'croc' },
+        { id: 'black_panther', name: 'Zwarte Panter', article: 'de', baseSpeed: 17.5, baseIncome: 160, bodyColor: 0x1a1a1a, headColor: 0x111111, featureColor: 0xffd600, scale: 1.15, type: 'ears_pointed' }
       ],
       6: [ // Level 6: Australische Outback
-        { id: 'koala', name: 'Koala', baseSpeed: 8.5, baseIncome: 2, bodyColor: 0x90a4ae, headColor: 0xb0bec5, featureColor: 0xeceff1, scale: 0.68, type: 'koala' },
-        { id: 'platypus', name: 'Vogelbekdier', baseSpeed: 10.8, baseIncome: 10, bodyColor: 0x6d4c41, headColor: 0x5d4037, featureColor: 0x37474f, scale: 0.75, type: 'platypus' },
-        { id: 'wombat', name: 'Wombat', baseSpeed: 13.0, baseIncome: 30, bodyColor: 0x8d6e63, headColor: 0x795548, featureColor: 0x4e342e, scale: 0.95, type: 'bear' },
-        { id: 'dingo', name: 'Dingo', baseSpeed: 15.2, baseIncome: 80, bodyColor: 0xd99142, headColor: 0xe6a14e, featureColor: 0xfff3e0, scale: 0.92, type: 'ears_pointed' },
-        { id: 'kangaroo', name: 'Kangoeroe', baseSpeed: 17.5, baseIncome: 160, bodyColor: 0xc2653c, headColor: 0xd4764c, featureColor: 0x8d4324, scale: 1.15, type: 'kangaroo' }
+        { id: 'koala', name: 'Koala', article: 'de', baseSpeed: 8.5, baseIncome: 2, bodyColor: 0x90a4ae, headColor: 0xb0bec5, featureColor: 0xeceff1, scale: 0.68, type: 'koala' },
+        { id: 'platypus', name: 'Vogelbekdier', article: 'het', baseSpeed: 10.8, baseIncome: 10, bodyColor: 0x6d4c41, headColor: 0x5d4037, featureColor: 0x37474f, scale: 0.75, type: 'platypus' },
+        { id: 'wombat', name: 'Wombat', article: 'de', baseSpeed: 13.0, baseIncome: 30, bodyColor: 0x8d6e63, headColor: 0x795548, featureColor: 0x4e342e, scale: 0.95, type: 'bear' },
+        { id: 'dingo', name: 'Dingo', article: 'de', baseSpeed: 15.2, baseIncome: 80, bodyColor: 0xd99142, headColor: 0xe6a14e, featureColor: 0xfff3e0, scale: 0.92, type: 'ears_pointed' },
+        { id: 'kangaroo', name: 'Kangoeroe', article: 'de', baseSpeed: 17.5, baseIncome: 160, bodyColor: 0xc2653c, headColor: 0xd4764c, featureColor: 0x8d4324, scale: 1.15, type: 'kangaroo' }
       ]
     };
 
@@ -1633,6 +1633,7 @@
       BASE_WORLD_SIZE: 200,
       WORLD_SIZE: 200,
       SAFE_ZONE_RADIUS: 14,
+      SAFE_ZONE_FLOOR_Y: 0.41,
       MAX_SPEED_CAP: 25,
       SPEED_BOOST_DURATION: 45.0,
       PICKUP_BOOST_AMOUNT: 10,
@@ -1652,7 +1653,7 @@
         mesh: null,
         leftLeg: null,
         rightLeg: null,
-        position: new THREE.Vector3(0, 0, 5),
+        position: new THREE.Vector3(0, 0.41, 5),
         radius: 0.4,
         height: 1.8,
         
@@ -1750,7 +1751,7 @@
         this.player.standingOnRock = false;
         this.level = 1;
 
-        this.player.position.set(0, 0, 5);
+        this.player.position.set(0, this.SAFE_ZONE_FLOOR_Y, 5);
         if (this.player.mesh) this.player.mesh.position.copy(this.player.position);
 
         this.clearAllAnimals();
@@ -1953,7 +1954,7 @@
           this.clearAllAnimals();
           UIController.updatePetCount(0);
 
-          this.player.position.set(0, 0, 5);
+          this.player.position.set(0, this.SAFE_ZONE_FLOOR_Y, 5);
           this.player.mesh.position.copy(this.player.position);
 
           this.applyLevelTheme(this.level, true);
@@ -2045,7 +2046,7 @@
         const shopGroup = new THREE.Group();
         const shopX = 6.5;
         const shopZ = -6.5;
-        shopGroup.position.set(shopX, 0, shopZ);
+        shopGroup.position.set(shopX, this.SAFE_ZONE_FLOOR_Y, shopZ);
 
         const baseGeo = new THREE.BoxGeometry(2.4, 1.4, 2.4);
         const baseMesh = new THREE.Mesh(baseGeo, this.materials.goldKiosk);
@@ -2528,7 +2529,7 @@
           runCycle: 0
         };
 
-        UIController.setChaseAlert(true, animalConfig.name);
+        UIController.setChaseAlert(true, animalConfig.name, animalConfig.article || 'de');
         UIController.showToast(`EI GEBROKEN! Een ${animalConfig.name.toUpperCase()} (Snelheid: ${scaledSpeed.toFixed(1)}) achtervolgt je!`, '#ff5252');
       },
 
@@ -2784,6 +2785,7 @@
       killPlayer(customReason = null) {
         UIController.flashDeathScreen();
         const animalName = this.activeChaser ? this.activeChaser.config.name : '';
+        const animalArticle = (this.activeChaser && this.activeChaser.config.article) ? this.activeChaser.config.article : 'de';
 
         if (this.activeChaser) {
           this.scene.remove(this.activeChaser.mesh);
@@ -2800,10 +2802,10 @@
           lostPetText = ` Je verloor een dier uit je Safe Zone!`;
         }
 
-        const reasonText = customReason || `GEGREPEN DOOR DE ${animalName.toUpperCase()}!`;
+        const reasonText = customReason || `GEGREPEN DOOR ${animalArticle.toUpperCase()} ${animalName.toUpperCase()}!`;
         UIController.showToast(`${reasonText}${lostPetText}`, '#ff5252');
 
-        this.player.position.set(0, 0, 5);
+        this.player.position.set(0, this.SAFE_ZONE_FLOOR_Y, 5);
         this.player.mesh.position.copy(this.player.position);
         this.player.stamina = this.player.maxStamina;
         this.player.isExhausted = false;
@@ -2823,12 +2825,14 @@
         UIController.setChaseAlert(false);
 
         const earnedPerSec = c.config.baseIncome;
+        const art = c.config.article || 'de';
+        const capArticle = art.charAt(0).toUpperCase() + art.slice(1);
 
-        UIController.showToast(`VEILIG! De ${c.config.name} is getemd! (+€${earnedPerSec.toLocaleString('nl-NL')}/s)`, '#00e676');
+        UIController.showToast(`VEILIG! ${capArticle} ${c.config.name} is getemd! (+€${earnedPerSec.toLocaleString('nl-NL')}/s)`, '#00e676');
 
         c.mesh.position.set(
           (Math.random() - 0.5) * (this.SAFE_ZONE_RADIUS * 1.4),
-          0,
+          this.SAFE_ZONE_FLOOR_Y,
           (Math.random() - 0.5) * (this.SAFE_ZONE_RADIUS * 1.4)
         );
 
@@ -2876,6 +2880,7 @@
 
         for (let i = 0; i < this.tamedPets.length; i++) {
           const pet = this.tamedPets[i];
+          pet.mesh.position.y = this.SAFE_ZONE_FLOOR_Y;
 
           if (pet.idleTimer > 0) {
             pet.idleTimer -= delta;
@@ -2890,12 +2895,13 @@
             pet.idleTimer = 2.0 + Math.random() * 3.0;
             pet.targetPos.set(
               (Math.random() - 0.5) * 2 * bound,
-              0,
+              this.SAFE_ZONE_FLOOR_Y,
               (Math.random() - 0.5) * 2 * bound
             );
           } else {
             toTarget.normalize();
             pet.mesh.position.addScaledVector(toTarget, delta * 3.0);
+            pet.mesh.position.y = this.SAFE_ZONE_FLOOR_Y;
             pet.mesh.rotation.y = Math.atan2(toTarget.x, toTarget.z);
 
             pet.walkCycle += delta * 8;
@@ -3114,8 +3120,9 @@
           p.position.z = Math.max(-bound, Math.min(bound, p.position.z));
         }
 
-        // 6. Verticale Fysica & Bepaling Ondergrond (Gras, Moeras vs Rots)
-        let highestSupportY = 0; // Standaard grasniveau
+        // 6. Verticale Fysica & Bepaling Ondergrond (Gras, Safe Zone, Moeras vs Rots)
+        const onSafeFloor = Math.abs(p.position.x) <= this.SAFE_ZONE_RADIUS && Math.abs(p.position.z) <= this.SAFE_ZONE_RADIUS;
+        let highestSupportY = onSafeFloor ? this.SAFE_ZONE_FLOOR_Y : 0;
         let onClimbableRock = false;
 
         // Controleer of de speler zich horizontaal boven een rots bevindt
